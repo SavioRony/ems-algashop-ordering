@@ -1,19 +1,13 @@
 package com.algaworks.algashop.ordering.domain.entity;
 
 import com.algaworks.algashop.ordering.domain.exception.CustomerArchivedException;
-import com.algaworks.algashop.ordering.domain.valueobject.BirthDate;
-import com.algaworks.algashop.ordering.domain.valueobject.CustomerId;
-import com.algaworks.algashop.ordering.domain.valueobject.Document;
-import com.algaworks.algashop.ordering.domain.valueobject.Email;
-import com.algaworks.algashop.ordering.domain.valueobject.FullName;
-import com.algaworks.algashop.ordering.domain.valueobject.LoyaltyPoints;
-import com.algaworks.algashop.ordering.domain.valueobject.Phone;
+import com.algaworks.algashop.ordering.domain.valueobject.*;
 
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.algaworks.algashop.ordering.domain.exception.ErrorMessages.VALIDATION_ERROR_FULLNAME_IS_NULL;
+import static com.algaworks.algashop.ordering.domain.exception.ErrorMessages.*;
 
 public class Customer {
     private CustomerId id;
@@ -27,16 +21,11 @@ public class Customer {
     private OffsetDateTime registeredAt;
     private OffsetDateTime archivedAt;
     private LoyaltyPoints loyaltyPoints;
+    private Address address;
 
-    public Customer(CustomerId id,
-                    FullName fullName,
-                    BirthDate birthDate,
-                    Email email,
-                    Phone phone,
-                    Document document,
-                    Boolean promotionNotificationsAllowed,
-                    OffsetDateTime registeredAt) {
-
+    public Customer(CustomerId id, FullName fullName, BirthDate birthDate, Email email,
+                    Phone phone, Document document, Boolean promotionNotificationsAllowed,
+                    OffsetDateTime registeredAt, Address address) {
         this.setId(id);
         this.setFullName(fullName);
         this.setBirthDate(birthDate);
@@ -47,20 +36,12 @@ public class Customer {
         this.setRegisteredAt(registeredAt);
         this.setArchived(false);
         this.setLoyaltyPoints(LoyaltyPoints.ZERO);
+        this.setAddress(address);
     }
 
-    public Customer(CustomerId id,
-                    FullName fullName,
-                    BirthDate birthDate,
-                    Email email,
-                    Phone phone,
-                    Document document,
-                    Boolean promotionNotificationsAllowed,
-                    Boolean archived,
-                    OffsetDateTime registeredAt,
-                    OffsetDateTime archivedAt,
-                    LoyaltyPoints loyaltyPoints) {
-
+    public Customer(CustomerId id, FullName fullName, BirthDate birthDate, Email email, Phone phone,
+                    Document document, Boolean promotionNotificationsAllowed, Boolean archived,
+                    OffsetDateTime registeredAt, OffsetDateTime archivedAt, LoyaltyPoints loyaltyPoints, Address address) {
         this.setId(id);
         this.setFullName(fullName);
         this.setBirthDate(birthDate);
@@ -72,6 +53,7 @@ public class Customer {
         this.setRegisteredAt(registeredAt);
         this.setArchivedAt(archivedAt);
         this.setLoyaltyPoints(loyaltyPoints);
+        this.setAddress(address);
     }
 
     public void addLoyaltyPoints(LoyaltyPoints loyaltyPointsAdded) {
@@ -87,8 +69,11 @@ public class Customer {
         this.setPhone(new Phone("000-000-0000"));
         this.setDocument(new Document("000-00-0000"));
         this.setEmail(new Email(UUID.randomUUID() + "@anonymous.com"));
-        this.setBirthDate(null); // permanece nulo após anonimização
+        this.setBirthDate(null);
         this.setPromotionNotificationsAllowed(false);
+        this.setAddress(this.address().toBuilder()
+                .number("Anonymized")
+                .complement(null).build());
     }
 
     public void enablePromotionNotifications() {
@@ -114,6 +99,11 @@ public class Customer {
     public void changePhone(Phone phone) {
         verifyIfChangeable();
         this.setPhone(phone);
+    }
+
+    public void changeAddress(Address address) {
+        verifyIfChangeable();
+        this.setAddress(address);
     }
 
     public CustomerId id() {
@@ -160,6 +150,10 @@ public class Customer {
         return loyaltyPoints;
     }
 
+    public Address address() {
+        return address;
+    }
+
     private void setId(CustomerId id) {
         Objects.requireNonNull(id);
         this.id = id;
@@ -171,22 +165,25 @@ public class Customer {
     }
 
     private void setBirthDate(BirthDate birthDate) {
-        // Nulo é permitido aqui para clientes anonimizados.
+        if (birthDate == null) {
+            this.birthDate = null;
+            return;
+        }
         this.birthDate = birthDate;
     }
 
     private void setEmail(Email email) {
-        Objects.requireNonNull(email, "email must not be null");
+        Objects.requireNonNull(email);
         this.email = email;
     }
 
     private void setPhone(Phone phone) {
-        Objects.requireNonNull(phone, "phone must not be null");
+        Objects.requireNonNull(phone);
         this.phone = phone;
     }
 
     private void setDocument(Document document) {
-        Objects.requireNonNull(document, "document must not be null");
+        Objects.requireNonNull(document);
         this.document = document;
     }
 
@@ -212,6 +209,11 @@ public class Customer {
     private void setLoyaltyPoints(LoyaltyPoints loyaltyPoints) {
         Objects.requireNonNull(loyaltyPoints);
         this.loyaltyPoints = loyaltyPoints;
+    }
+
+    private void setAddress(Address address) {
+        Objects.requireNonNull(address);
+        this.address = address;
     }
 
     private void verifyIfChangeable() {
